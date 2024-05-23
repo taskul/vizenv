@@ -1,0 +1,46 @@
+  /* -----------------------------------------BUTTONS--------------------------------- */
+  .btn-primary {
+    background-color: var(--background-color-secondary);
+    color: var(--primary-color);
+    border: 1px solid var(--border-outline-color);
+    border-radius: 4px;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 4px 2px;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.btn-primary.visible {
+  opacity: 0.75;
+  visibility: visible;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  opacity: 0.9;
+  visibility: visible;
+}
+
+.btn-secondary {
+  background-color: var(--background-color);
+  color: var(--primary-color);
+  border: 1px solid var(--border-outline-color);
+  border-radius: 4px;
+  padding: 5px 10px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.8rem;
+  display: inline-block;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  opacity: 0.9;
+}

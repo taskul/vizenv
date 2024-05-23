@@ -1,0 +1,57 @@
+.side-menu-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 80%;
+  display: flex;
+  align-items: center;
+}
+
+.side-menu {
+  position: relative;
+  height: 100%;
+  background-color: #333;
+  color: var(--primary-color);
+  transition: transform 0.3s ease;
+  transform: translateX(100%);
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.side-menu.open {
+  transform: translateX(0);
+}
+
+.side-menu-container.open {
+  transform: translateX(0);
+}
+
+.btn-menu-toggle {
+  position: absolute;
+  top: 50%;
+  left: -50px;
+  padding: 10px 20px;
+  background-color: var(--background-color);
+  border: 1px solid var(--border-outline-color);
+  color: var(--primary-color);
+  cursor: pointer;
+  border-radius: 5px;
+  z-index: 100;
+}
+
+.btn-menu-toggle:hover {
+  border: 2px solid var(--border-outline-color);
+}
+
+.side-menu-resizer {
+  position: absolute;
+  top: 35px;
+  left: -1px;
+  width: 6px;
+  height: 95%;
+  cursor: col-resize;
+  background: transparent;
+}
+
+.side-menu-resizer:hover {
+  background: var(--border-outline-color);
+}

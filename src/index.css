@@ -1,0 +1,42 @@
+body {
+  font-family: monospace;
+  margin: 0;
+  /* padding: 10; */
+  --primary-color: #FAF0E6;
+  --secondary-gray-color: #b2aba3;
+  --background-color: #0F0F0F;
+  --background-color-secondary: #1e1e1e;
+  --border-outline-color: #4b4b4b;
+  --green-command: rgb(211, 247, 211);
+  background-color: var(--background-color);
+  color: var(--secondary-gray-color)
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.container-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  /* justify-content: space-evenly; */
+  text-align: center;
+
+}
+
+.container-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* justify-content: space-between; */
+
+}
+
+.no-margin {
+  margin: 0;
+}
