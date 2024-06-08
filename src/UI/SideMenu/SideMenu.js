@@ -59,16 +59,33 @@ export default function SideMenu() {
         ref={sidebarRef}
         className={`side-menu ${isOpen ? 'open' : ''}`}
         style={{ width: sidebarWidth }}
+        aria-hidden={!isOpen}
       >
         <button 
             onClick={toggleMenu} 
             className="btn-menu-toggle"
-            style={{left: isOpen ? -50 : -sidebarWidth+-50}}
+            style={{
+                left: isOpen ? -50 : -sidebarWidth+-50,
+                backgroundColor: isOpen ? '#B3C8CF' : 'var(--background-color)',
+                color: isOpen ? 'var(--background-color)' : 'var(--primary-color)',
+              }}
+              aria-expanded={isOpen}
+              aria-controls="side-menu"
+              aria-label={isOpen ? 'Close side menu' : 'Open side menu'}
+
         >
           {isOpen ? '-' : '+'}
         </button>
         <TabsMenu />
-        <div className="side-menu-resizer" onMouseDown={startResizing} />
+        <div 
+          className="side-menu-resizer" 
+          onMouseDown={startResizing} 
+          role="separator"
+          aria-orientation="vertical"
+          aria-valuemin="20"
+          aria-valuemax="80"
+          aria-valuenow={(sidebarWidth / window.innerWidth) * 100}
+        />
       </div>
     </div>
   );

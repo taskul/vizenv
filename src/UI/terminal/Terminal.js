@@ -1,8 +1,7 @@
-import update from 'immutability-helper'
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import "./Terminal.css";
 import "../../UI/Buttons.css";
-const { sendToMain, receiveFromMain, endConnection } = window.electron;
+const { sendToMain, receiveFromMain, endConnection, sendToMainAndAwait } = window.electron;
 import { checkDirChangeCmd } from '../../../public/utils/changeDirectory.js';
 import processOutput from '../../../public/utils/processOutput.js'
 import TerminalLine from './TerminalLine.js';
@@ -12,11 +11,13 @@ import UserInputContainer from './UserInputContainer';
 import userCmdContext from '../../../public/context/userCmdContext.js';
 import ToggleSwitch from '../GlobalComponents/ToggleSwitch.js';
 import SideMenu from '../SideMenu/SideMenu.js';
+import { manageDependenciesList } from '../Environments/NodeJs/manageDependenciesList.js';
+import processPythonPackages from '../Environments/Python/HandlePythonPackages.js';
 
-let counter = 0;
 // stores user typed commands that then can be used for checking what command was executed to manage display of the terminal output
 let cliCommand;
-
+let packageManagerCommand;
+let dataAccumulator = [];
 // stores user typed commands
 const userCmdStore = new UserCmdStore();
 
@@ -48,19 +49,22 @@ function CommandsInput() {
             // resets the index so the if previous command was called it is added to the top of the stack. 
             userCmdStore.idx = userCmdStore.length;
         })
+        // move to next line which is empty, this is to visually show that the command was sent
         sendToMain('cli:command', {command : ''});
         resetForm();
         focusInput()
     }
 
-    function handleSubmit(e) {
+
+
+    async function handleSubmit(e) {
         if (!toggleMultiline) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                sendToMain('cli:command', {command :inputs.cliInput});
-                cliCommand = inputs.cliInput;
+                cliCommand = inputs.cliInput.trim().toLowerCase();
+                sendToMain('cli:command', {command :cliCommand});
                 // add command to a stack of user entered commands
-                userCmdStore.add(inputs.cliInput);
+                userCmdStore.add(cliCommand);
                 // resets the index so the if previous command was called it is added to the top of the stack. 
                 userCmdStore.idx = userCmdStore.length;
                 resetForm();
@@ -140,41 +144,34 @@ function CommandsInput() {
 }
 
 // terminal component that displays the output of the commands
-const Terminal = React.memo(function Terminal() {
+function Terminal() {
     const [terminalOutput, setTerminalOutput] = useState([]);
     const [manualCmdActivated, setManualCmdActivated] = useState(false);
     const [manualCmd, setManualCmd] = useState('');
     const terminalRef = useRef(null);
-    // helps to determine if the command was activated by the user by clicking on UI element
-    let clickEnteredCmd = false;
-    console.log('Counter', counter++);
 
     const handleData = useCallback((data) => {
-        console.log('Data before rendering and splittings', data);  
         data = data.replace('\r', '');
         const lines = data.split('\n');
         // if command is undefined that means user did not enter it in cli.
-        if (cliCommand === undefined || cliCommand === 'cd') {
-            checkDirChangeCmd(lines, cliCommand, clickEnteredCmd)
+        if (cliCommand === undefined || cliCommand.trim() === 'cd') {
+            checkDirChangeCmd(lines, cliCommand)
         }
-
-        setTerminalOutput(prev => 
-            [...prev, ...lines
-                .filter(line => line.trim() !== '' && line.trim() !== '>>>') // Filter out empty lines and >>> lines
-                .map((line, index) => 
-                    ({ 
-                        id: `${prev.length}-${index}`, 
-                        // Change the look of the line depending if it is a user command, error, or normal output
-                        class: clickEnteredCmd ? "terminal-command" : processOutput(line, cliCommand), 
-                        text: line 
-                    }))
-            ],            
-        );
-        clickEnteredCmd = false;
-        
-        if (manualCmd) {
-            updateClickActivatedCmd();
-            setManualCmd('');
+        if (cliCommand.trim() === 'pip list') {
+            handlePythonPackages(lines);
+        } else {
+            setTerminalOutput(prev => 
+                [...prev, ...lines
+                    .filter(line => line.trim() !== '' && line.trim() !== '>>>') // Filter out empty lines and >>> lines
+                    .map((line, index) => 
+                        ({ 
+                            id: `${prev.length}-${index}`, 
+                            // Change the look of the line depending if it is a user command, error, or normal output
+                            class: processOutput(line, cliCommand), 
+                            text: line 
+                        }))
+                ],            
+            );
         }
 
         // clear the screen
@@ -183,12 +180,56 @@ const Terminal = React.memo(function Terminal() {
         }
     }, []);  
 
+    // this starts an interactive package manager mode in a terminal output for managing dependencies and libraries
+    const handleInteractiveDataMode = useCallback((data) =>{
+        packageManagerCommand = data.packageManager;
+        const modifiedData = manageDependenciesList(data);
+        setTerminalOutput(prev => [...prev, ...modifiedData]);              
+    }, []);
+
+    // check if string is a directory 
+    function startsWithDriveLetter(line) {
+        // This regex matches strings that start with any drive letter followed by ":\"
+        const regex = /^[a-zA-Z]:\\/;
+        return regex.test(line);
+    }
+
+    // handles the output of the pip list command
+    const handlePythonPackages = useCallback((data) => {
+        processPythonPackages(data, dataAccumulator, handleInteractiveDataMode, startsWithDriveLetter);
+    }, []);
+
+    const updatePackage = useCallback((packageName) => {
+        if (packageManagerCommand === 'npm') {
+            sendToMain('cli:command', {command: `${packageManagerCommand} install ${packageName}@latest`});
+            // setting cliCommand to the command that was sent to the main process will help with displaying the output of the command in the terminal
+            cliCommand = `${packageManagerCommand} install ${packageName}@latest`;
+        } else if (packageManagerCommand === 'pip') {
+            sendToMain('cli:command', {command: `${packageManagerCommand} install --upgrade ${packageName}`});
+            cliCommand = `${packageManagerCommand} install --upgrade ${packageName}`;
+        }
+    });
+
+    const removePackage = useCallback((packageName) => {
+        sendToMain('cli:command', {command: `${packageManagerCommand} uninstall ${packageName}`});
+        cliCommand = `${packageManagerCommand} uninstall ${packageName}`;
+    });
+
+    // process errors by first splitting them into array of lines, then rendering them with a CSS class that specifies error or warning
     const handleErrors = useCallback((error) => {
         if (error) {
             const errorType = error.startsWith('WARNING:') ? 'terminal-warning' : 'terminal-error';
-            setTerminalOutput(prev => [...prev, { id: `error-${prev.length}`, class: errorType, text: error }]);
+            const lines = error.replace('\r', '').split('\n');
+
+            setTerminalOutput(prev => [...prev, ...lines.map((line, index) => ({ id: `error-${prev.length}-${index}`, class: errorType, text: line }))
+            ])
         }
     }, []);  
+
+    const clickActivatedCmd = useCallback((cmd) => {
+        // set global cliCommand to click activated cmd passed from a child component
+        cliCommand = cmd;
+    },[]);
 
  
     useEffect(() => {
@@ -207,6 +248,17 @@ const Terminal = React.memo(function Terminal() {
         }
     }, [terminalOutput]);
 
+    const contextValue = useMemo(() => ({
+        clickActivatedCmd,
+        manualCmdActivated,
+        setManualCmdActivated,
+        manualCmd,
+        setManualCmd,
+        updatePackage,
+        removePackage,
+        handleInteractiveDataMode,
+    }), [clickActivatedCmd, manualCmdActivated, manualCmd]);
+
     return (
         <main>
             <div id="terminal" ref={terminalRef}>
@@ -215,18 +267,19 @@ const Terminal = React.memo(function Terminal() {
                         key={output.id}
                         className={output.class}
                         text={output.text}
-                        counter={counter}
-                    />
+                        updatePackage={updatePackage}
+                        removePackage={removePackage}
+                    />                    
                 ))}
             </div>
+            <userCmdContext.Provider value={contextValue}>
             <SideMenu />
-            <userCmdContext.Provider value={{manualCmdActivated, setManualCmdActivated, manualCmd, setManualCmd}}>
-                <UserInputContainer>
-                    <CommandsInput />
-                </UserInputContainer>
+            <UserInputContainer>
+                <CommandsInput />
+            </UserInputContainer>
             </userCmdContext.Provider>
         </main>
     )
-})
+}
 
 export default Terminal;

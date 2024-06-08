@@ -20,6 +20,10 @@ export default function TabsMenu() {
                     className={activeTab === 'tab-python' ? 'tablinks active' : 'tablinks'} 
                     id="tab-python" 
                     onClick={changeTabState}
+                    role="tab"
+                    aria-selected={activeTab === 'tab-python'}
+                    aria-controls="python-panel"
+                    tabIndex="0"
                 >
                     <img src={`${publicUrl}/images/icons8-python-48.png`} alt="Python icon" className='tabs-icons'/>
                     Python
@@ -28,15 +32,19 @@ export default function TabsMenu() {
                     className={activeTab === 'tab-node' ? 'tablinks active' : 'tablinks'} 
                     id="tab-node" 
                     onClick={changeTabState}
+                    role="tab"
+                    aria-selected={activeTab === 'tab-node'}
+                    aria-controls="node-panel"
+                    tabIndex="0"
                 >
                     <img src={`${publicUrl}/images/icons8-node-js-48.png`} alt="NodeJS icon" className='tabs-icons'/>
                     Node.js
                 </button>
             </div>
-            {activeTab === 'tab-python' && <div className="tabcontent">
+            {activeTab === 'tab-python' && <div className="tabcontent" id="python-panel" role="tabpanel" aria-labelledby="tab-python">
                 <PythonEnv />
             </div>}
-            {activeTab === 'tab-node' && <div className="tabcontent">
+            {activeTab === 'tab-node' && <div className="tabcontent" id="node-panel" role="tabpanel" aria-labelledby="tab-node">
                 <NodeJsEnv />
             </div>}
         </div>

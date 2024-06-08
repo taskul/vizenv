@@ -2,7 +2,7 @@
   "name": "vizenv",
   "productName": "VizEnv",
   "version": "1.0.0",
-  "description": "Application for visual display of working environment",
+  "description": "Command line interface application for visual display of working environment",
   "main": "main.js",
   "scripts": {
     "start": "webpack --mode development && electron .",
@@ -19,6 +19,7 @@
     "@babel/preset-react": "^7.24.1",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.13",
     "babel-loader": "^9.1.3",
+    "cross-env": "^7.0.3",
     "electron": "^30.0.3",
     "electron-builder": "^24.13.3",
     "electron-reload": "^2.0.0-alpha.1",
@@ -29,17 +30,28 @@
     "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
+    "electron-updater": "^6.2.1",
     "immutability-helper": "^3.1.1",
     "node-pty": "^1.0.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "uuid": "^9.0.1"
   },
   "build": {
-    "appId": "vizenv.xyz",
+    "appId": "tas.vizenv.xyz",
+    "productName": "VizEnv",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "taskul",
+        "repo": "vizenv"
+      }
+    ],
     "files": [
       "dist/**/*",
       "main.js",
-      "public/**/*"
+      "public/**/*",
+      "package.json"
     ],
     "mac": {
       "category": "public.app-category.productivity"

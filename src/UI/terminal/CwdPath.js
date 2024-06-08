@@ -2,11 +2,10 @@ import React, { useEffect, useState, useContext } from 'react';
 import "./Terminal.css";
 import userCmdContext from '../../../public/context/userCmdContext';
 const { receiveFromMain, endConnection, sendToMainAndAwait } = window.electron;
-userCmdContext
 
 export default function CwdUiPath() {
     const [cwd, setCwd] = useState('');
-    const { manualCmdActivated, setManualCmdActivated, manualCmd, setManualCmd} = useContext(userCmdContext);
+    const { manualCmdActivated, setManualCmdActivated, manualCmd, setManualCmd, clickActivatedCmd} = useContext(userCmdContext);
 
     useEffect(() => { 
         const handleTerminalStart = (currentDirectory) => {
@@ -28,6 +27,8 @@ export default function CwdUiPath() {
             const directoryPath = await sendToMainAndAwait('open:directory');
             setManualCmdActivated(true);
             setManualCmd(directoryPath);
+            setCwd(directoryPath);
+            clickActivatedCmd("cd " + directoryPath);
         } catch (error) {
             console.error(error);
         }
@@ -35,7 +36,13 @@ export default function CwdUiPath() {
 
     return (
         <>
-            <a id="current-directory" className="current-cwd"  href="#" onClick={openFileDirectory}>cwd: {cwd}</a> 
+            <a 
+                id="current-directory" 
+                className="current-cwd"  
+                href="#" 
+                onClick={openFileDirectory}
+                aria-label={`Change current working directory.`}
+            >cwd: {cwd}</a> 
         </>
     );
 }

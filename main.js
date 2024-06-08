@@ -3,16 +3,18 @@ const {app, BrowserWindow, Menu, nativeTheme, ipcMain, dialog} = require('electr
 const pty = require('node-pty');
 const os = require('os');
 const path = require('path');
+const { autoUpdater } = require('electron-updater');
 const { changedDirectory } = require('./public/utils/changeDirectory.js');
 
-
 let mainWindow;
-let currentDirectory;
-let currentCommand;
-let inPythonShell = false;
+let currentDirectory ='';
+let currentCommand ='';
+let dirChangedByClick = false;
 
-const isDev = process.env.NODE_ENV !== 'development' ? true : false
+// const isDev = process.env.NODE_ENV !== 'production' ? true : false
+const isDev = false;
 const isMac = process.platform === 'darwin' ? true : false
+
 
 nativeTheme.themeSource = 'dark';
 
@@ -22,12 +24,11 @@ process.env.PUBLIC_URL = path.join(__dirname, 'public');
 function createMainWindow() {
     mainWindow = new BrowserWindow({
         title: 'VizEnv',
-        width: isDev ? 1200 : 500,
+        width: 1000,
         height: 800,
         icon: './assets/icons/icon.png',
-        resizable: isDev ? true : false,
-        backgroundColor: 'white',
-        autofill: false,
+        resizable: true,
+        backgroundColor: '#0F0F0F',
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -35,15 +36,34 @@ function createMainWindow() {
             preload: path.join(__dirname, 'public', 'preload.js'),
         }
     });
-    console.log("PRELOAD", path.join(__dirname, 'preload.js'));
 
     if (isDev) {
         mainWindow.webContents.openDevTools()
       }
     
     mainWindow.loadFile('public/index.html')
+    // Check for updates
+    autoUpdater.checkForUpdatesAndNotify();
     
     mainWindow.on('closed', () => mainWindow = null);
+}
+
+function createAboutWindow() {
+  aboutWindow = new BrowserWindow({
+      title: 'About VizEnv',
+      width: 400,
+      height: 400,
+      icon: './assets/icons/icon.png',
+      resizable: false,
+      backgroundColor: '#0F0F0F',
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        enableRemoteModule: false,
+    }
+  });
+  // load the about.html file into the about window
+  aboutWindow.loadFile('public/about.html');
 }
 
 
@@ -63,6 +83,15 @@ const menu = [
     {
       role: 'fileMenu',
     },
+    ...(!isMac ? [{ 
+      label: 'Help',
+      submenu: [
+          {
+              label: 'About',
+              click: createAboutWindow
+          }
+      ]
+    }] : []),
     ...(isDev
       ? [
           {
@@ -98,8 +127,9 @@ let ptyProcess = pty.spawn('cmd.exe', [], {
 
 // listen for command from the UI and send it to the terminal
 ipcMain.on('cli:command', (e, options) =>{
+    
     try {
-      ptyProcess.write(options.command + '\r');
+      ptyProcess.write(options.command + '\r')
       currentCommand = options.command;
       // close app if user types exit
       if (options.command === "exit") {
@@ -121,26 +151,24 @@ ptyProcess.on('data', (data) => {
 
   function stripAnsiEscapeCodes(str) {
     // Adjusted regex to match cursor visibility and other control sequences
-        // Revised regex that strictly matches ANSI escape codes
       // \x1B\[\d*;?\d*[A-Z] - Matches typical cursor and style escape sequences
       // \x1B\[\??\d+[hl] - Matches screen and mode settings
       // \x1B\].*?\x07 - Matches OSC (Operating System Command) sequences
-    return str.replace(/\x1b\[[0-9;?]*[a-zA-Z]|\x1b\].*?\x07/g, '');
+      return str.replace(/\x1b\[[0-9;?]*[a-zA-Z]|\x1b\].*?\x07|\x1b\[\d*;\d*[H]/g, '');
   }
-  console.log("Raw output before:", JSON.stringify(data));
   data = stripAnsiEscapeCodes(data);
 
   if (isError(data)) {
-      console.error("Error detected:", data);
-      // checkPythonCommmds(data);
       mainWindow.webContents.send('cli:error', data);  
   } else {
-      mainWindow.webContents.send('cli:reply', data);
-      // watches for a command "cd" to change the directory display in the terminal
-      if (currentCommand && currentCommand.startsWith('cd')) {
-        // update UI with new directory
-        currentDirectory = changedDirectory(data, currentCommand, currentDirectory, mainWindow);
-      } 
+      // this manages the output of the terminal when user changes the directory
+      if (currentCommand.startsWith('cd ')) {
+        currentDirectory = changedDirectory(data, currentCommand, currentDirectory, mainWindow, dirChangedByClick);
+        dirChangedByClick = false;
+      } else {
+        // all other command output goes through here
+          mainWindow.webContents.send('cli:reply', data);
+      }
   }
 });
 
@@ -161,21 +189,77 @@ ipcMain.handle('open:directory', async () => {
       defaultPath: currentDirectory,
       properties: ['openDirectory']
   });
-  console.log("RESULT", result);
   if (!result.canceled && result.filePaths.length > 0) {
     ptyProcess.write('cd ' + result.filePaths[0] + '\r');
     currentCommand = 'cd ' + result.filePaths[0];
+    currentDirectory = result.filePaths[0];
+    dirChangedByClick = true;
     return result.filePaths[0];
+  }
+  if (result.canceled) {
+    return currentDirectory;
   }
   return null;
 });
 
-// ---------------------------PYTHON ENV COMMANDS
+// ipcMain.handle handles the request and sends back a response
+// retrun a list of npm project dependencies from package.json back to the user
+ipcMain.handle('cli:npmDependencies', async () => {
+    const fs = require('fs');
+    try {
+      let dir = '';
+      dir = currentDirectory.replace('>', '').trim();
+      const packageJsonPath = path.resolve(dir, 'package.json');
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+      
+      const dependencies = packageJson.dependencies || {};
+      const devDependencies = packageJson.devDependencies || {};
+      const dependenciesList = [Object.entries(dependencies)];
+      return  {
+          dependencies: [...Object.entries(dependencies)], devDependencies: [...Object.entries(devDependencies)],
+          packageManager: 'npm'
+        };  
+      } catch (error) {
+        return [{error: `ERROR: ${error.message}`, packageManager: 'npm'}];
+      }
+  }
+);
+
+// -------cli commands activated by buttons in a side menu------
 ipcMain.on('buttonActivated:command', (e, options) => {
   try {
     ptyProcess.write(options.command + '\r');
+    currentCommand = options.command;
   } catch (error) { 
     console.error(error);
   }
 });
   
+// -----------------Manage updates-------------------
+autoUpdater.on('update-available', (info) => {
+  log.info('Update available.');
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Update available',
+    message: 'A new version is available. Do you want to update now?',
+    buttons: ['Yes', 'No'],
+  }).then((result) => {
+    if (result.response === 0) { // 'Yes' button index
+      autoUpdater.downloadUpdate();
+    }
+  });
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  log.info('Update downloaded.');
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Update ready',
+    message: 'Update downloaded. It will be installed on restart. Restart now?',
+    buttons: ['Yes', 'Later'],
+  }).then((result) => {
+    if (result.response === 0) { // 'Yes' button index
+      autoUpdater.quitAndInstall();
+    }
+  });
+});

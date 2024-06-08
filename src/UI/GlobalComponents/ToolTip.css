@@ -2,10 +2,10 @@
     background-color: var(--background-color-secondary);
     border: 1px solid var(--primary-color);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 10px;
+    padding: 0px;
+    margin: 0px 3px;
     z-index: 1000;
     max-width: 200px;
     border-radius: 5px;
-    pointer-events: none; 
+    pointer-events: none;
   }
-  

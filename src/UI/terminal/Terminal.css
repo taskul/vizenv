@@ -55,6 +55,7 @@
     color: black;
     font-weight: bold;
     font-size: 1rem;
+    margin: 0px;
 }
 
 .terminal-info {
@@ -74,6 +75,17 @@
     padding-right: 10px;
     margin: 0px;
     padding: 0px;
+}
+
+.terminal-package-label {
+    background-color: var(--secondary-gray-color);
+    color: var(--background-color);
+    display: block;
+    margin: 0px;
+    padding: 0px 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
 }
 
 

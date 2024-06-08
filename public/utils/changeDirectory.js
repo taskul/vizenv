@@ -3,25 +3,34 @@
 // Desc: This will update the current working directory of the terminal interface for the user.
 // The actual change of the directory will be handled by the main process and node-pty.
 // >>>Used in a main.js
-function changedDirectory(data, curCommand, cwd, window) {
-    if (curCommand === 'cd') {
-        data = data.replace(curCommand, '');
-        try {
-            if (data !== undefined) {
-                data = data.slice(data.length/2 + 1);
+function changedDirectory(data, curCommand, cwd, window, dirChangedByClick) {
+    const promptPattern = /^([A-Za-z]:\\[^>]+>)$/m;
+    try {
+        if (dirChangedByClick) {
+            window.webContents.send('cli:reply', `cd ${cwd}`);
+            window.webContents.send('terminal:start', cwd);
+            return cwd;
+        }
+        else {
+            let cleanedData = data;
+            console.log("DATA", JSON.stringify(data));
+            // sending data to the UI so it can be displayed as user entered
+            if (data.startsWith('cd ')) {
+                // if command and new directory come back in one string, this will clean it up so only the new directory is returned
+                cleanedData = data.replace(curCommand, '');
+                window.webContents.send('cli:reply', curCommand);
             }
-        } catch (err) {
-            console.log("Error", err);
-        }
+            // if the data is a directory path, update the UI with the new directory
+            if (promptPattern.test(cleanedData)) {
+                window.webContents.send('terminal:start', cleanedData);
+                window.webContents.send('cli:reply', cleanedData);
+                console.log("Changed directory to:", cleanedData);
+                return cleanedData;
+            }
+        }        
+    } catch (err) {
+        console.log("Error", err);
     }
-    if (curCommand.startsWith('cd ')) {
-        data = data.replace(curCommand, '');
-        if (cwd !== data) {
-            window.webContents.send('terminal:start', data);
-            cwd = data;
-        }
-    }
-    return cwd;
 }
 
 // ------------------Render Process functions
@@ -44,7 +53,7 @@ function splitUpStrInArr(arr) {
 
 // check if the command is a change directory command - "cd". 
 // >>>Used in a UI terminal
-function checkDirChangeCmd(arr, cmd, clickEnteredCmd) {
+function checkDirChangeCmd(arr, cmd) {
     if (cmd === undefined && arr[0].startsWith('cd ')) {
         splitUpStrInArr(arr);
     }

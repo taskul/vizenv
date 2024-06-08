@@ -76,8 +76,8 @@ export default function CommandsInput() {
             value={inputs.cliInput} 
             onChange={handleChange} 
             onKeyDown={handleSubmit}
-            >
+        >
 
-            </textarea>
+        </textarea>
     )
 }
