@@ -12,7 +12,7 @@ let currentCommand ='';
 let dirChangedByClick = false;
 
 // const isDev = process.env.NODE_ENV !== 'production' ? true : false
-const isDev = false;
+const isDev = true;
 const isMac = process.platform === 'darwin' ? true : false
 
 

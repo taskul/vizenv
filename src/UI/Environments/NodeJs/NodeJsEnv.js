@@ -37,13 +37,15 @@ export default function NodeJsEnv() {
             <div className="container-row">
             <h2>Node.js Environment</h2>
                 <Tooltip tooltipContent={"Make sure Node.js and npm are installed locally and add Node.js to PATH environment variable on Windows"}>
-                <button
-                    aria-describedby="tooltip-content"
-                    aria-label="Help information"
-                    className="tooltip-content"
-                >
-                ❔
-                </button>
+                <div
+                        role="button"
+                        aria-describedby="tooltip-content"
+                        aria-label="Help information"
+                        className="tooltip-icon"
+                    >
+                    {/* info icon */}
+                    &#x1F6C8;
+                </div>
                 </Tooltip>
             </div>
 

@@ -6,7 +6,7 @@ function processOutput(data, command) {
     if (line.includes('usage:') || line.includes('options:') || line.includes('info:') || line.includes('help:') || line.includes('commands:')) {
         elementClass = 'terminal-info'; 
     }
-    if (line === command) {
+    if (line === command.toLowerCase()) {
         elementClass = 'terminal-command'
     }
     return elementClass;

@@ -1,8 +1,8 @@
 .switch {
     position: relative;
     display: inline-block;
-    width: 50px; /* Reduced from 60px */
-    height: 23px; /* Reduced from 34px */
+    width: 45px;
+    height: 23px; 
   }
   
   /* Hide default HTML checkbox */
@@ -60,3 +60,6 @@
     border-radius: 50%;
   }
   
+  #toggle-switch-label {
+    margin: 5px;
+  }

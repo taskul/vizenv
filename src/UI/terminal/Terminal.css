@@ -147,3 +147,10 @@
     color: rgb(194, 194, 194);
     opacity: 0.9;
   }
+
+/* Containers */
+.cli-buttons-container {
+    position: absolute;
+    margin: 0;
+    right: 10px;
+  }

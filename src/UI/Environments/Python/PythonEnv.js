@@ -33,13 +33,15 @@ export default function PythonEnv() {
             <div className="container-row">
                 <h2>Python Environment</h2>
                 <Tooltip tooltipContent={"Make sure Python is installed locally and add Python to PATH environment variable on Windows"}>
-                    <button
+                    <div
+                        role="button"
                         aria-describedby="tooltip-content"
                         aria-label="Help information"
-                        className="tooltip-content"
+                        className="tooltip-icon"
                     >
-                    ❔
-                    </button>
+                    {/* info icon */}
+                    &#x1F6C8;
+                    </div>
                 </Tooltip>
             </div>
             <div className="container-row">

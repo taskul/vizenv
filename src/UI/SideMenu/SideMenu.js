@@ -53,29 +53,37 @@ export default function SideMenu() {
   return (
     <div 
         className="side-menu-container"
-        style={{right: isOpen ? 0 : -sidebarWidth}}
+        style={{
+          right: isOpen ? 0 : -sidebarWidth,
+        }}
     >
+      {/* button to control opeing on the side menu */}
+      <button 
+        onClick={toggleMenu} 
+        className="btn-menu-toggle"
+        tabIndex={1}
+        style={{
+            left: isOpen ? -50 : -sidebarWidth+-50,
+            backgroundColor: isOpen ? '#B3C8CF' : 'var(--background-color)',
+            color: isOpen ? 'var(--background-color)' : 'var(--primary-color)',
+          }}
+          aria-expanded={isOpen}
+          aria-controls="side-menu"
+          aria-label={isOpen ? 'Close side menu' : 'Open side menu'}
+      >
+        {isOpen ? '-' : '+'}
+      </button>
+        
+      {/* side menu contents*/}
       <div
         ref={sidebarRef}
         className={`side-menu ${isOpen ? 'open' : ''}`}
-        style={{ width: sidebarWidth }}
+        style={{ 
+          width: sidebarWidth, 
+          display: isOpen ? 'block' : 'none' 
+        }}
         aria-hidden={!isOpen}
       >
-        <button 
-            onClick={toggleMenu} 
-            className="btn-menu-toggle"
-            style={{
-                left: isOpen ? -50 : -sidebarWidth+-50,
-                backgroundColor: isOpen ? '#B3C8CF' : 'var(--background-color)',
-                color: isOpen ? 'var(--background-color)' : 'var(--primary-color)',
-              }}
-              aria-expanded={isOpen}
-              aria-controls="side-menu"
-              aria-label={isOpen ? 'Close side menu' : 'Open side menu'}
-
-        >
-          {isOpen ? '-' : '+'}
-        </button>
         <TabsMenu />
         <div 
           className="side-menu-resizer" 
@@ -87,6 +95,7 @@ export default function SideMenu() {
           aria-valuenow={(sidebarWidth / window.innerWidth) * 100}
         />
       </div>
+
     </div>
   );
 };

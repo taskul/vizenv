@@ -75,6 +75,7 @@ const Tooltip = ({ children, tooltipContent }) => {
             width: '150px', 
           }}
         >
+          {/* supports new line character if that is included in the content string */}
           {tooltipContent.split('\\n').map((line, index) => (
             <p key={`toolTip-${index}`}>{line}</p>
           ))}

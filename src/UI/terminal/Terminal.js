@@ -30,7 +30,7 @@ function CommandsInput() {
 
     const textAreaRef = useRef(null);
 
-    // moves the focus back to position zero after command is sent
+    // moves the focus back to position zero inside of the command input field after command is sent
     function focusInput() {
         if (textAreaRef.current) {
             textAreaRef.current.focus();
@@ -39,6 +39,7 @@ function CommandsInput() {
         }
     }
 
+    // handles multiline commands
     function handleMultilineSubmit(e) {
         e.preventDefault();
         const lines = inputs.cliInput.split('\n');
@@ -61,7 +62,8 @@ function CommandsInput() {
         if (!toggleMultiline) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                cliCommand = inputs.cliInput.trim().toLowerCase();
+                cliCommand = inputs.cliInput.trim()
+                // cliCommand = inputs.cliInput.trim().toLowerCase();
                 sendToMain('cli:command', {command :cliCommand});
                 // add command to a stack of user entered commands
                 userCmdStore.add(cliCommand);
@@ -107,7 +109,8 @@ function CommandsInput() {
                 name="cliInput" 
                 id="input-field" 
                 ref={textAreaRef}
-                autoComplete="off" 
+                autoComplete="off"
+                tabIndex={0} 
                 placeholder="Type your command here..." 
                 value={inputs.cliInput} 
                 onChange={handleChange} 
@@ -121,16 +124,19 @@ function CommandsInput() {
                         label="Multiline Mode" 
                         checked={toggleMultiline}
                         setChecked={setToggleMultiline}
-                        />
+                    />
                 </div>
                 {toggleMultiline 
                     ?
-                    <div className="container-column">
+                    <div className="container-column ">
                         <button 
                             className={`btn-primary ${toggleMultiline ? 'visible' : ''}`}
+                            tabIndex={0}
                             onClick={handleMultilineSubmit}
 
-                        >&#9654;
+                        >
+                            {/* Arrow icon */}
+                            &#9654;
                         </button>
                         <p className="no-margin">"Ctrl+Enter"</p>
                     </div>
@@ -154,10 +160,10 @@ function Terminal() {
         data = data.replace('\r', '');
         const lines = data.split('\n');
         // if command is undefined that means user did not enter it in cli.
-        if (cliCommand === undefined || cliCommand.trim() === 'cd') {
+        if (cliCommand === undefined || cliCommand.trim().toLowerCase() === 'cd') {
             checkDirChangeCmd(lines, cliCommand)
         }
-        if (cliCommand.trim() === 'pip list') {
+        if (cliCommand.trim().toLowerCase() === 'pip list') {
             handlePythonPackages(lines);
         } else {
             setTerminalOutput(prev => 

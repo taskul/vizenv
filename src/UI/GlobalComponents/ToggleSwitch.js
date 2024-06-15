@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './ToggleSwitch.css'; // Assuming you save the CSS in a separate file
 
-export default function ToggleSwitch({label, checked, setChecked}) {
+export default function ToggleSwitch({label, setChecked}) {
   const [isChecked, setIsChecked] = useState(false);
 
   const handleToggle = () => {
@@ -24,7 +24,10 @@ export default function ToggleSwitch({label, checked, setChecked}) {
           onChange={handleToggle} 
           aria-hidden="true" 
         />
-        <span className="slider round"></span>
+        <span 
+          className="slider round"
+          tabIndex={0}
+        ></span>
       </label>
     </div>
   );
